@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Put, Param, Delete, UseGuards } from '@nestjs/common';
 import { CategoryService } from './category.service';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('categories')
@@ -35,5 +36,12 @@ export class CategoryController {
   @ApiOperation({ summary: 'Delete a category' })
   remove(@Param('id') id: string) {
     return this.categoryService.remove(+id);
+  }
+
+  @Put(':id/set-default')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Set a category as default for store landing' })
+  setDefault(@Param('id') id: string) {
+    return this.categoryService.setDefault(+id);
   }
 }

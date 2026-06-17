@@ -60,4 +60,10 @@ export class CategoryService implements OnModuleInit {
   async getDefaultCategory() {
     return await this.categoryRepository.findOne({ where: { name: 'Other' } });
   }
+
+  async setDefault(id: number) {
+    await this.categoryRepository.update({}, { isDefault: false });
+    await this.categoryRepository.update({ id }, { isDefault: true });
+    return this.findOne(id);
+  }
 }

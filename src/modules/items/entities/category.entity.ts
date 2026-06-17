@@ -7,6 +7,9 @@ export class Category extends Model {
   @Column({ unique: true })
   name: string;
 
+  @Column({ default: false })
+  isDefault: boolean;
+
   @OneToMany(() => Item, (item) => item.category)
   items: Item[];
 }
