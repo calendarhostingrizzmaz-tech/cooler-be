@@ -5,6 +5,7 @@ import { Item } from './entities/item.entity';
 import { ItemImage } from './entities/item-image.entity';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { ReorderItemsDto } from './dto/reorder-items.dto';
 import { S3Service } from '../../shared/s3/s3.service';
 import { CategoryService } from './category.service';
 
@@ -132,9 +133,15 @@ export class ItemsService {
       rest.discountedPrice,
     );
 
+    const maxSortOrder = await this.itemRepository
+      .createQueryBuilder('item')
+      .select('MAX(item.sortOrder)', 'max')
+      .getRawOne<{ max: number | null }>();
+
     const item = this.itemRepository.create({
       ...rest,
       image: urls[0] ?? '',
+      sortOrder: (maxSortOrder?.max ?? 0) + 1,
     });
     const saved = await this.itemRepository.save(item);
     await this.replaceGallery(saved.id, urls);
@@ -193,7 +200,7 @@ export class ItemsService {
       qb.andWhere(`${eff} <= :maxPrice`, { maxPrice: mx });
     }
 
-    qb.orderBy('item.createdAt', 'DESC')
+    qb.orderBy('item.sortOrder', 'ASC').addOrderBy('item.createdAt', 'DESC')
       .skip((safePage - 1) * safeLimit)
       .take(safeLimit);
 
@@ -234,6 +241,15 @@ export class ItemsService {
     if (!item) throw new NotFoundException(`Item #${id} not found`);
     this.sortItemImages(item);
     return item;
+  }
+
+  async reorder(dto: ReorderItemsDto): Promise<{ success: boolean }> {
+    await Promise.all(
+      dto.items.map(({ id, sortOrder }) =>
+        this.itemRepository.update(id, { sortOrder }),
+      ),
+    );
+    return { success: true };
   }
 
   async update(

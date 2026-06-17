@@ -38,6 +38,9 @@ export class Item extends Model {
   @Column('text')
   description: string;
 
+  @Column({ default: 0 })
+  sortOrder: number;
+
   @Column({ nullable: true })
   categoryId: number;
 

@@ -15,6 +15,7 @@ import { ItemsService } from './items.service';
 import { S3Service } from '../../shared/s3/s3.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { ReorderItemsDto } from './dto/reorder-items.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UseInterceptors, UploadedFile, UploadedFiles } from '@nestjs/common';
@@ -77,6 +78,12 @@ export class ItemsController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.itemsService.findOne(id);
+  }
+
+  @Patch('reorder')
+  @UseGuards(JwtAuthGuard)
+  reorder(@Body() dto: ReorderItemsDto) {
+    return this.itemsService.reorder(dto);
   }
 
   @Patch(':id')
