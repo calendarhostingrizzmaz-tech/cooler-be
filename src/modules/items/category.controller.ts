@@ -2,6 +2,8 @@ import { Controller, Get, Post, Body, Patch, Put, Param, Delete, UseGuards } fro
 import { CategoryService } from './category.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @ApiTags('categories')
 @Controller('categories')
@@ -9,9 +11,11 @@ export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new category' })
-  create(@Body('name') name: string) {
-    return this.categoryService.create(name);
+  create(@Body() dto: CreateCategoryDto) {
+    return this.categoryService.create(dto.name);
   }
 
   @Get()
@@ -27,12 +31,16 @@ export class CategoryController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a category' })
-  update(@Param('id') id: string, @Body('name') name: string) {
-    return this.categoryService.update(+id, name);
+  update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
+    return this.categoryService.update(+id, dto.name);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a category' })
   remove(@Param('id') id: string) {
     return this.categoryService.remove(+id);
@@ -40,6 +48,7 @@ export class CategoryController {
 
   @Put(':id/set-default')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Set a category as default for store landing' })
   setDefault(@Param('id') id: string) {
     return this.categoryService.setDefault(+id);

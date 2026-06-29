@@ -1,4 +1,10 @@
-import { Injectable, OnModuleInit, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  OnModuleInit,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
@@ -25,8 +31,28 @@ export class CategoryService implements OnModuleInit {
     }
   }
 
+  private normalizeName(name: string): string {
+    const trimmed = name?.trim?.() ?? '';
+    if (!trimmed) {
+      throw new BadRequestException('Category name is required');
+    }
+    return trimmed;
+  }
+
+  private async assertUniqueName(name: string, excludeId?: number): Promise<void> {
+    const existing = await this.categoryRepository
+      .createQueryBuilder('category')
+      .where('LOWER(category.name) = LOWER(:name)', { name })
+      .getOne();
+    if (existing && existing.id !== excludeId) {
+      throw new BadRequestException('A category with this name already exists');
+    }
+  }
+
   async create(name: string) {
-    const category = this.categoryRepository.create({ name });
+    const normalized = this.normalizeName(name);
+    await this.assertUniqueName(normalized);
+    const category = this.categoryRepository.create({ name: normalized });
     return await this.categoryRepository.save(category);
   }
 
@@ -41,9 +67,11 @@ export class CategoryService implements OnModuleInit {
   }
 
   async update(id: number, name: string) {
-    const category = await this.findOne(id);
-    category.name = name;
-    return await this.categoryRepository.save(category);
+    await this.findOne(id);
+    const normalized = this.normalizeName(name);
+    await this.assertUniqueName(normalized, id);
+    await this.categoryRepository.update({ id }, { name: normalized });
+    return this.findOne(id);
   }
 
   async remove(id: number) {
